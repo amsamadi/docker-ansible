@@ -1,0 +1,127 @@
+---
+  - name: find docker application
+    shell: "which docker"
+    ignore_errors: yes
+    register: result
+    tags:
+      - all
+      - preinstall
+    become: yes 
+  - name: check docker is installed
+    meta: end_host
+    when: result.rc == 0
+    tags:
+      - all
+      - preinstall
+    become: yes 
+  - name: update and upgrade system
+    apt:
+      update_cache: yes
+      upgrade: yes
+    tags:
+      - all
+      - install
+    become: yes 
+  - name: install packages needed for docker
+    apt:
+      name: "{{ DOCKER_PACKAGES }}"
+      state: present
+      force_apt_get: yes
+    tags:
+      - all
+      - install
+    become: yes 
+  - name: add docker gpg apt key
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+    tags:
+      - all
+      - install
+    become: yes 
+  - name: save the current ubuntu release version into a variable 
+    shell: lsb_release -cs
+    register: ubuntu_version
+    tags:
+      - all
+      - install             
+    become: yes 
+  - name: add docker repository
+    apt_repository:
+      repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ubuntu_version.stdout }} stable"
+      state: present
+    tags:
+      - all
+      - install                        
+    become: yes 
+  - name: update system
+    apt:
+      update_cache: yes
+    tags:
+      - all
+      - install
+    become: yes 
+  - name: install docker
+    apt:
+      name: "{{ DOCKER_CE }}"
+      state: present
+      force_apt_get: yes
+    tags:
+      - all
+      - install
+    become: yes 
+  - name: install docker compose
+    get_url:
+      url: https://github.com/docker/compose/releases/download/{{ DOCKER_COMPOSE_VERSION }}/docker-compose-Linux-x86_64
+      dest: "/usr/local/bin/docker-compose"
+      mode: 0755
+    ignore_errors: yes
+    tags:
+      - all
+      - install       
+    become: yes 
+  - name: link docker compose binary to /usr/bin directory
+    shell: "ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose"
+    ignore_errors: yes
+    tags:
+      - all
+      - install            
+    become: yes 
+  - name: make sure that docker was started and enabled
+    service:
+      name: docker
+      state: started
+      enabled: yes
+    tags:
+      - all
+      - install  
+      - postinstall
+    become: yes 
+  - name: feth remote loggined user on target nodes
+    shell: "echo $USER"
+    register: user
+    tags:
+      - all
+      - postinstall
+  - name: adding logined user on the target nodes to docker group
+    user:
+      name: "{{ user.stdout }}"
+      groups: "docker"
+      append: yes
+    tags:
+      - all
+      - postinstall
+    become: yes
+  - name: fetch docker version from hosts
+    shell: "docker -v | cut -d ' ' -f 3 | cut -d ',' -f 1"
+    register: version
+    tags:
+      - all
+      - postinstall
+    become: yes 
+  - name: show docker version on hosts
+    debug:
+      msg: "Docker version is {{version.stdout}}"
+    tags:
+      - all
+      - postinstall

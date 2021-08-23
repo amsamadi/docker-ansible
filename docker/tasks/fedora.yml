@@ -1,0 +1,97 @@
+---
+  - name: find docker application
+    shell: "which docker"
+    ignore_errors: yes
+    register: result
+    tags:
+      - all
+      - preinstall          
+  - name: check docker is installed
+    meta: end_host
+    when: result.rc == 0
+    tags:
+      - all
+      - preinstall            
+  - name: update and upgrade system 
+    dnf:
+      update_only: yes
+      update_cache: yes
+    tags:
+      - all
+      - preinstall
+    become: yes    
+  - name: install dnf-plugins-core
+    dnf:
+      name: dnf-plugins-core
+      state: present
+    tags:
+      - all
+      - install
+    become: yes            
+  - name: add docker repository
+    get_url:
+       url: https://download.docker.com/linux/fedora/docker-ce.repo
+       dest: /etc/yum.repos.d/docer-ce.repo
+    tags:
+      - all
+      - install
+    become: yes    
+  - name: update system 
+    dnf:
+      update_only: yes
+    tags:
+      - all
+      - preinstall
+    become: yes     
+  - name: install docker packages
+    dnf:
+      name: "{{DOCKER_CE}}"
+      state: present
+    tags:
+      - all
+      - install
+    become: yes       
+  - name: install docker compose
+    dnf:
+      name: docker-compose
+      state: present
+    tags:
+      - all
+      - postinstall
+    become: yes
+  - name: make sure that docker was started and enabled
+    service:
+      name: docker
+      state: started
+      enabled: yes
+    tags:
+      - all
+      - postinstall  
+    become: yes
+  - name: feth remote loggined user on target nodes
+    shell: "echo $USER"
+    register: user
+    tags: 
+      - all
+      - postinstall
+  - name: adding logined user on the target nodes to docker group
+    user:
+      name: "{{ user.stdout }}"
+      groups: "docker"
+      append: yes
+    tags:
+      - all
+      - postinstall
+    become: yes    
+  - name: fetch docker version from hosts
+    shell: "docker -v | cut -d ' ' -f 3 | cut -d ',' -f 1"
+    register: version
+    tags:
+      - all
+      - postinstall       
+  - name: Show docker version on hosts
+    debug:
+      msg: "Docker version is {{version.stdout}}"
+    tags:
+      - all
+      - postinstall 
