@@ -1,7 +1,7 @@
 # docker-ansible
 #### ansible role for docker installation
 ---
-## What's configured in this playbook?
+## What's configured in this role?
 ####  The latest Docker CE and Docker Compose will be installed
 ---
 #### NOTE: Ansible-core version is 2.11.4
