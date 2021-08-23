@@ -1,5 +1,5 @@
 # docker-ansible
-#### ansible role for docker installation
+#### ansible role for docker installation based  on your distro
 ---
 ## What's configured in this role?
 ####  The latest Docker CE and Docker Compose will be installed
