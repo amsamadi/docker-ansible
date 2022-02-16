@@ -19,4 +19,3 @@
 - DOCKER_COMPOSE_VERSION: Version of docker-compose that will be installed
 
 ---
-###### [@dwsclass](https://github.com/dwsclass)dws-ops-002-ansible
